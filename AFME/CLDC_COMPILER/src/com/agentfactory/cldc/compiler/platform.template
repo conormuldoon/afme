@@ -1,0 +1,178 @@
+## Copyright:   Copyright (c) 1996-2006 The Agent Factory Working Group. All rights reserved.
+## Licence:     This file is free software; you can redistribute it and/or modify
+##              it under the terms of the GNU Lesser General Public License as published by
+##              the Free Software Foundation; either version 2.1, or (at your option)
+##              any later version.
+##
+##              This file is distributed in the hope that it will be useful,
+##              but WITHOUT ANY WARRANTY; without even the implied warranty of
+##              MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+##              GNU Lesser General Public License for more details.
+##
+##              You should have received a copy of the GNU Lesser General Public License
+##              along with Agent Factory Micro Edition; see the file COPYING.  If not, write to
+##              the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+##              Boston, MA 02111-1307, USA.
+##
+##				Author: Conor Muldoon
+package <<package>>;
+import com.agentfactory.cldc.logic.FOS;
+import javax.microedition.rms.RecordStore;
+import com.agentfactory.cldc.logic.RoleLibrary;
+import com.agentfactory.cldc.logic.RoleTemplate;
+//import javax.microedition.rms.RecordStoreException;
+import java.util.Hashtable;
+//import java.util.Vector;
+//import com.agentfactory.cldc.mts.MTSPerceptor;
+import com.agentfactory.cldc.AgentName;
+import javax.microedition.midlet.MIDlet;
+import javax.microedition.lcdui.Display;
+import javax.microedition.lcdui.List;
+import javax.microedition.lcdui.CommandListener;
+import javax.microedition.lcdui.Displayable;
+import javax.microedition.lcdui.Command;
+import com.agentfactory.cldc.UserInterface;
+import com.agentfactory.cldc.MIDletRunnable;
+import com.agentfactory.cldc.scheduler.AgentRunnable;
+import com.agentfactory.cldc.logic.MalformedLogicException;
+
+//import com.agentfactory.cldc.Service;
+import com.agentfactory.cldc.PerceptionManager;
+import com.agentfactory.cldc.AffectManager;
+import com.agentfactory.cldc.Perceptor;
+import com.agentfactory.cldc.scheduler.Scheduler;
+import com.agentfactory.cldc.logic.TerImplication;
+import com.agentfactory.cldc.logic.Agent;
+//import java.io.DataInputStream;
+//import com.agentfactory.cldc.Actuator;
+//import com.agentfactory.cldc.Module;
+<<migration_import>>
+
+
+
+public class <<project>>AgentPlatform implements CommandListener<<migration_platform>>{
+    
+    
+    
+    Scheduler scheduler;
+    UserInterface inter;
+    Hashtable services;
+    List list;
+    MIDlet let;
+    String[]storeData;
+    Hashtable agents;
+    <<migration_declare>>
+    
+
+
+
+   Hashtable agentIndex;
+
+    public <<project>>AgentPlatform(MIDlet let) {
+    
+    	<<declaration>>
+    	
+        this.let=let;
+        storeData=null;
+        list=new List("Choose Agent",List.IMPLICIT);
+        RecordStore rs=null;
+        
+        <<num_thread>>
+        
+        try{
+            rs=RecordStore.openRecordStore("<<project>>NameStore", true);
+            int nextID=rs.getNextRecordID();
+            storeData=new String[nextID-1];
+            
+            for( int id = nextID;id-->1; ){
+                storeData[id-1]=new String(rs.getRecord(id)).trim();
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally{
+            try{
+                rs.closeRecordStore();
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+            
+        }
+        services = new Hashtable();
+        <<migration_construct>>
+        agents=new Hashtable();
+
+       agentIndex=new Hashtable();
+       <<construction>>
+       <<startagents>>
+       <<stringNames>>
+       for(int i=0;i<stringNames.length;i++)
+           agentIndex.put(stringNames[i],new Integer(list.append(stringNames[i],null)));
+            
+       back=new Command("Back",Command.BACK,0);
+       exit=new Command("Exit",Command.EXIT,1);
+       list.addCommand(back);
+       list.setCommandListener(this);
+
+        
+        <<namearray>>
+       
+        //Service service;
+        String[] args;
+        <<services>>
+        <<interface>>
+        <<scheduleagents>>
+
+        
+    }
+    
+    public AgentName createName(String agentName){
+        if(storeData!=null)for(int i=storeData.length;i-->0;){
+            String smpNm=storeData[i].substring(0,storeData[i].indexOf(AgentName.DELIM));
+            if(smpNm.equals(agentName))return new AgentName(storeData[i],"<<project>>");
+        }
+        return new AgentName(agentName,"<<project>>");
+    }
+
+    public void start(){
+        scheduler.start();
+    }
+    public void pause(){
+        scheduler.pause();
+    }
+    public void destroy(){
+        scheduler.destroy();
+    }
+    
+    
+
+
+   Command back,exit;
+    public void display(){
+       Display.getDisplay(let).setCurrent(list);
+   }
+    
+   public void commandAction(Command c, Displayable d){
+        if(c==List.SELECT_COMMAND){
+            AgentRunnable agent=(AgentRunnable)agents.get(list.getString(list.getSelectedIndex()));
+            agent.display();
+           return;
+        }
+        if(c==exit){
+            let.notifyDestroyed();
+            return;
+       }
+        
+        ((<<project>>Let)let).display();
+        
+   }
+    
+    
+    public void displayApp(){
+        if(inter!=null)inter.display();
+    }
+    
+    <<roles>>
+
+    <<migration_methods>>
+    
+}
